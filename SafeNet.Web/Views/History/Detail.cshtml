@@ -1,0 +1,140 @@
+﻿@model SafeNet.Web.Models.ViewModels.HistoryViewModel
+
+@{
+    ViewData["Title"] = "Detalle del Análisis";
+    var analysis = Model.SelectedAnalysis;
+
+    string badgeClass = analysis.Verdict switch
+    {
+        "ESTAFA" => "danger",
+        "SOSPECHOSO" => "warning",
+        "SEGURO" => "success",
+        _ => "secondary"
+    };
+
+    string iconClass = analysis.Verdict switch
+    {
+        "ESTAFA" => "bi-x-circle-fill",
+        "SOSPECHOSO" => "bi-exclamation-triangle-fill",
+        "SEGURO" => "bi-check-circle-fill",
+        _ => "bi-question-circle"
+    };
+}
+
+<div class="container py-4">
+
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver al Historial
+        </a>
+        <h2 class="mb-0 fw-bold">
+            <i class="bi bi-file-earmark-text text-primary me-2"></i>Detalle del Análisis
+        </h2>
+    </div>
+
+    <div class="card border-@badgeClass shadow-sm mb-4">
+        <div class="card-body text-center py-4">
+            <i class="bi @iconClass text-@badgeClass" style="font-size: 3rem;"></i>
+            <h3 class="mt-2 fw-bold text-@badgeClass">@analysis.Verdict</h3>
+            <div class="mt-2">
+                <span class="fs-5 fw-semibold">Riesgo: </span>
+                <span class="fs-4 fw-bold text-@badgeClass">@analysis.RiskScore%</span>
+            </div>
+            <div class="progress mt-3 mx-auto" style="max-width:400px; height:12px;">
+                <div class="progress-bar bg-@badgeClass" role="progressbar"
+                     style="width: @analysis.RiskScore%"
+                     aria-valuenow="@analysis.RiskScore" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-light fw-semibold">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>Información General
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 text-muted">ID Análisis</dt>
+                        <dd class="col-sm-7">#@analysis.AnalysisId</dd>
+
+                        <dt class="col-sm-5 text-muted">Tipo</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                @(analysis.AnalysisType?.TypeName ?? "N/A")
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Fecha</dt>
+                        <dd class="col-sm-7">@analysis.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-5 text-muted">Usuario</dt>
+                        <dd class="col-sm-7 text-truncate">@analysis.UserId</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-start border-4 border-@badgeClass">
+                <div class="card-header bg-light fw-semibold">
+                    <i class="bi bi-lightbulb me-2 text-warning"></i>Recomendación
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(analysis.Recommendation))
+                    {
+                        <p class="mb-0">@analysis.Recommendation</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0"><em>Sin recomendación disponible.</em></p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light fw-semibold">
+                    <i class="bi bi-chat-left-text me-2 text-secondary"></i>Contenido Analizado
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light rounded p-3 mb-0" style="white-space: pre-wrap; word-break: break-word; font-size: 0.9rem;">@analysis.InputContent</pre>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(analysis.Signals))
+        {
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light fw-semibold">
+                        <i class="bi bi-flag me-2 text-danger"></i>Señales Detectadas
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            @foreach (var signal in analysis.Signals.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <li class="list-group-item d-flex align-items-center gap-2">
+                                    <i class="bi bi-dot text-danger fs-4"></i>
+                                    @signal.Trim()
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="mt-4">
+        <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver al Historial
+        </a>
+    </div>
+
+</div>
