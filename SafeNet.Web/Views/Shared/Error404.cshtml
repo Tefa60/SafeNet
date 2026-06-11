@@ -1,0 +1,63 @@
+@* SafeNet.Web/Views/Shared/Error404.cshtml *@
+@* CREAR este archivo nuevo *@
+@{
+    ViewData["Title"] = "Página no encontrada";
+    Layout = "_Layout";
+}
+
+<style>
+    .error-page {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .error-code {
+        font-size: 8rem;
+        font-weight: 900;
+        line-height: 1;
+        background: linear-gradient(135deg, #1F4E79 0%, #2e86de 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .shield-anim {
+        animation: flotar 3s ease-in-out infinite;
+    }
+    @@keyframes flotar {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-12px); }
+    }
+</style>
+
+<div class="error-page">
+    <div class="text-center px-4">
+
+        <i class="bi bi-shield-slash shield-anim text-primary" style="font-size: 5rem;"></i>
+
+        <div class="error-code mt-2">404</div>
+
+        <h2 class="fw-bold mt-2 mb-2">Página no encontrada</h2>
+        <p class="text-muted mb-4" style="max-width: 420px; margin: 0 auto;">
+            La página que buscas no existe o fue movida.
+            Pero no te preocupes — SafeNet sigue protegido.
+        </p>
+
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a asp-controller="Home" asp-action="Index"
+               class="btn btn-primary rounded-3 px-4">
+                <i class="bi bi-house me-1"></i> Ir al inicio
+            </a>
+            <a asp-controller="Text" asp-action="Index"
+               class="btn btn-outline-primary rounded-3 px-4">
+                <i class="bi bi-chat-text me-1"></i> Verificar texto
+            </a>
+        </div>
+
+        <p class="text-muted small mt-5">
+            <i class="bi bi-info-circle me-1"></i>
+            Si crees que esto es un error, contacta al administrador.
+        </p>
+
+    </div>
+</div>

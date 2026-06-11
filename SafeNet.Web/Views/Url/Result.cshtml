@@ -1,0 +1,88 @@
+@* SafeNet.Web/Views/Url/Result.cshtml *@
+@model SafeNet.Web.Models.ViewModels.UrlResultViewModel
+@{
+    ViewData["Title"] = "Resultado URL";
+    string badgeClass = Model.Verdict switch {
+        "ESTAFA"     => "danger",
+        "SOSPECHOSA" => "warning",
+        "SEGURA"     => "success",
+        _            => "secondary"
+    };
+    string icon = Model.Verdict switch {
+        "ESTAFA"     => "bi-shield-x",
+        "SOSPECHOSA" => "bi-shield-exclamation",
+        "SEGURA"     => "bi-shield-check",
+        _            => "bi-shield"
+    };
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="text-center mb-4">
+                <i class="bi @icon text-@badgeClass" style="font-size:3.5rem;"></i>
+                <h1 class="fw-bold mt-2">@Model.Verdict</h1>
+                <p class="text-muted text-truncate">@Model.Url</p>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-2">Nivel de riesgo</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="progress flex-grow-1 rounded-pill" style="height:14px;">
+                            <div class="progress-bar bg-@badgeClass"
+                                 style="width:@Model.RiskScore%"></div>
+                        </div>
+                        <span class="fw-bold text-@badgeClass">@Model.RiskScore / 100</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Signals.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-4">
+                        <p class="fw-semibold mb-2">
+                            <i class="bi bi-exclamation-triangle me-1 text-warning"></i>
+                            Señales detectadas
+                        </p>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var s in Model.Signals)
+                            {
+                                <li class="small py-1">
+                                    <i class="bi bi-dot text-warning fs-5"></i> @s
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Recommendation))
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <p class="fw-semibold mb-1">
+                            <i class="bi bi-lightbulb me-1 text-@badgeClass"></i> Recomendación
+                        </p>
+                        <p class="small mb-0">@Model.Recommendation</p>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <a asp-action="Index" asp-controller="Url"
+                   class="btn btn-outline-secondary rounded-3 flex-grow-1">
+                    <i class="bi bi-arrow-left me-1"></i> Verificar otra URL
+                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-action="Index" asp-controller="History"
+                       class="btn btn-outline-primary rounded-3 flex-grow-1">
+                        <i class="bi bi-clock-history me-1"></i> Mi Historial
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

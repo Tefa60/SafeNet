@@ -1,0 +1,48 @@
+@* SafeNet.Web/Views/Url/Index.cshtml *@
+@model SafeNet.Web.Models.ViewModels.UrlInputViewModel
+@{ ViewData["Title"] = "Verificar URL"; }
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="text-center mb-4">
+                <i class="bi bi-link-45deg text-primary" style="font-size:3rem;"></i>
+                <h1 class="fw-bold mt-2">Verificar URL</h1>
+                <p class="text-muted">Comprueba si un enlace es seguro antes de abrirlo.</p>
+            </div>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <form asp-action="Check" asp-controller="Url" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label asp-for="Url" class="form-label fw-semibold small"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="bi bi-link text-muted"></i>
+                                </span>
+                                <input asp-for="Url"
+                                       class="form-control border-start-0 rounded-end-3"
+                                       placeholder="https://ejemplo.com/pagina"
+                                       autocomplete="off" />
+                            </div>
+                            <span asp-validation-for="Url" class="text-danger small"></span>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary rounded-3 py-2">
+                                <i class="bi bi-shield-check me-2"></i> Verificar URL
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <p class="text-muted small text-center mt-3">
+                <i class="bi bi-info-circle me-1"></i>
+                SafeNet analiza el dominio, patrones sospechosos y consulta IA para darte un veredicto.
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -1,32 +1,43 @@
-using System.Diagnostics;
+// SafeNet.Web/Controllers/HomeController.cs
+// REEMPLAZAR el archivo existente
 using Microsoft.AspNetCore.Mvc;
-using SafeNet.Web.Models;
+using Microsoft.EntityFrameworkCore;
+using SafeNet.Data;
+using SafeNet.Web.Models.ViewModels;
+using System.Security.Claims;
 
 namespace SafeNet.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly AppDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(AppDbContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
-        }
+            var vm = new HomeViewModel
+            {
+                TotalAnalyses = await _context.Analyses.CountAsync(),
+                TotalScams    = await _context.Analyses.CountAsync(a => a.Verdict == "ESTAFA"),
+                TotalSafe     = await _context.Analyses.CountAsync(a => a.Verdict == "SEGURA"),
+            };
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+                vm.UserAnalyses = await _context.Analyses
+                    .Where(a => a.UserId == userId)
+                    .CountAsync();
+                vm.UserScams = await _context.Analyses
+                    .Where(a => a.UserId == userId && a.Verdict == "ESTAFA")
+                    .CountAsync();
+            }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(vm);
         }
     }
 }

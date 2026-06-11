@@ -1,140 +1,332 @@
-﻿@model SafeNet.Web.Models.ViewModels.HistoryViewModel
-
+@* SafeNet.Web/Views/History/Detail.cshtml *@
+@* REEMPLAZAR el archivo existente con este contenido completo *@
+@using SafeNet.Data.Entidades
+@model AnalysisEntity
 @{
-    ViewData["Title"] = "Detalle del Análisis";
-    var analysis = Model.SelectedAnalysis;
+    ViewData["Title"] = "Detalle del Análisis #" + Model.AnalysisId;
 
-    string badgeClass = analysis.Verdict switch
+    string verdictClass = Model.Verdict switch
     {
-        "ESTAFA" => "danger",
-        "SOSPECHOSO" => "warning",
-        "SEGURO" => "success",
-        _ => "secondary"
+        "ESTAFA"     => "danger",
+        "SOSPECHOSA" => "warning",
+        "SEGURA"     => "success",
+        _            => "secondary"
+    };
+    string verdictIcon = Model.Verdict switch
+    {
+        "ESTAFA"     => "bi-shield-x",
+        "SOSPECHOSA" => "bi-shield-exclamation",
+        "SEGURA"     => "bi-shield-check",
+        _            => "bi-question-circle"
+    };
+    string riskBarColor = Model.RiskScore switch
+    {
+        <= 30 => "success",
+        <= 69 => "warning",
+        _     => "danger"
+    };
+    string typeIcon = Model.AnalysisType?.TypeName switch
+    {
+        "URL"    => "bi-link-45deg",
+        "Imagen" => "bi-file-image",
+        _        => "bi-chat-text"
     };
 
-    string iconClass = analysis.Verdict switch
-    {
-        "ESTAFA" => "bi-x-circle-fill",
-        "SOSPECHOSO" => "bi-exclamation-triangle-fill",
-        "SEGURO" => "bi-check-circle-fill",
-        _ => "bi-question-circle"
-    };
+    var signals = Model.Signals?
+        .Split('|', StringSplitOptions.RemoveEmptyEntries)
+        .ToList() ?? new List<string>();
 }
 
-<div class="container py-4">
+@* ── CSS de impresión ─────────────────────────────────────────────────────── *@
+@section Styles {
+<style>
+    @@media print {
+        /* Ocultar elementos de navegacion y acciones */
+        .navbar, .btn-volver, .card-acciones, footer,
+        .no-print { display: none !important; }
 
-    <div class="d-flex align-items-center mb-4 gap-3">
-        <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Volver al Historial
+        /* Mostrar encabezado del reporte */
+        .print-header { display: block !important; }
+
+        /* Layout de impresion */
+        body { background: white !important; }
+        .container { max-width: 100% !important; padding: 0 !important; }
+        .col-lg-8 { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+        .col-lg-4 { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+        .row { display: block !important; }
+
+        /* Cards sin sombra en impresion */
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+            break-inside: avoid;
+            margin-bottom: 12px !important;
+        }
+
+        /* Colores de veredicto visibles en impresion */
+        .text-danger  { color: #dc3545 !important; -webkit-print-color-adjust: exact; }
+        .text-warning { color: #fd7e14 !important; -webkit-print-color-adjust: exact; }
+        .text-success { color: #198754 !important; -webkit-print-color-adjust: exact; }
+        .bg-danger    { background-color: #dc3545 !important; -webkit-print-color-adjust: exact; }
+        .bg-warning   { background-color: #fd7e14 !important; -webkit-print-color-adjust: exact; }
+        .bg-success   { background-color: #198754 !important; -webkit-print-color-adjust: exact; }
+
+        /* Barra de progreso */
+        .progress { border: 1px solid #dee2e6 !important; }
+        .progress-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* Pie del reporte */
+        .print-footer { display: block !important; }
+
+        @@page {
+            margin: 1.5cm;
+            size: A4;
+        }
+    }
+
+    /* Ocultar elementos solo-impresion en pantalla */
+    .print-header, .print-footer { display: none; }
+
+    /* Animacion sutil al cargar */
+    .card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+    }
+</style>
+}
+
+@* ── Encabezado solo para impresion ──────────────────────────────────────── *@
+<div class="print-header border-bottom pb-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-0" style="color:#1F4E79;">🛡️ SafeNet</h2>
+            <p class="text-muted small mb-0">Detector Inteligente de Estafas Digitales</p>
+        </div>
+        <div class="text-end">
+            <p class="small mb-0 text-muted">Reporte de Análisis</p>
+            <p class="small mb-0 fw-semibold">#@Model.AnalysisId — @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm") UTC</p>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+
+    @* ── Encabezado pantalla ──────────────────────────────────────────────── *@
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a asp-action="Index" asp-controller="History"
+           class="btn btn-outline-secondary rounded-3 btn-volver no-print">
+            <i class="bi bi-arrow-left me-1"></i> Volver
         </a>
-        <h2 class="mb-0 fw-bold">
-            <i class="bi bi-file-earmark-text text-primary me-2"></i>Detalle del Análisis
-        </h2>
-    </div>
-
-    <div class="card border-@badgeClass shadow-sm mb-4">
-        <div class="card-body text-center py-4">
-            <i class="bi @iconClass text-@badgeClass" style="font-size: 3rem;"></i>
-            <h3 class="mt-2 fw-bold text-@badgeClass">@analysis.Verdict</h3>
-            <div class="mt-2">
-                <span class="fs-5 fw-semibold">Riesgo: </span>
-                <span class="fs-4 fw-bold text-@badgeClass">@analysis.RiskScore%</span>
-            </div>
-            <div class="progress mt-3 mx-auto" style="max-width:400px; height:12px;">
-                <div class="progress-bar bg-@badgeClass" role="progressbar"
-                     style="width: @analysis.RiskScore%"
-                     aria-valuenow="@analysis.RiskScore" aria-valuemin="0" aria-valuemax="100">
-                </div>
-            </div>
+        <div class="flex-grow-1">
+            <h1 class="fw-bold mb-0">
+                Análisis <span class="text-muted">#@Model.AnalysisId</span>
+            </h1>
+            <p class="text-muted small mb-0">
+                @Model.CreatedAt.ToString("dd/MM/yyyy") a las @Model.CreatedAt.ToString("HH:mm") UTC
+            </p>
         </div>
+        @* ── Botón descargar PDF ──────────────────────────────────────────── *@
+        <button onclick="imprimirReporte()"
+                class="btn btn-primary rounded-3 no-print">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Descargar PDF
+        </button>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3">
+        <div class="col-lg-8">
 
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light fw-semibold">
-                    <i class="bi bi-info-circle me-2 text-primary"></i>Información General
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5 text-muted">ID Análisis</dt>
-                        <dd class="col-sm-7">#@analysis.AnalysisId</dd>
-
-                        <dt class="col-sm-5 text-muted">Tipo</dt>
-                        <dd class="col-sm-7">
-                            <span class="badge bg-primary bg-opacity-10 text-primary">
-                                @(analysis.AnalysisType?.TypeName ?? "N/A")
+            @* ── Veredicto ────────────────────────────────────────────────── *@
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi @verdictIcon text-@verdictClass" style="font-size: 2.5rem;"></i>
+                        <div>
+                            <p class="text-muted small mb-1">Veredicto</p>
+                            <span class="badge bg-@verdictClass fs-5 px-4 py-2 rounded-pill">
+                                @Model.Verdict
                             </span>
-                        </dd>
-
-                        <dt class="col-sm-5 text-muted">Fecha</dt>
-                        <dd class="col-sm-7">@analysis.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-
-                        <dt class="col-sm-5 text-muted">Usuario</dt>
-                        <dd class="col-sm-7 text-truncate">@analysis.UserId</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-start border-4 border-@badgeClass">
-                <div class="card-header bg-light fw-semibold">
-                    <i class="bi bi-lightbulb me-2 text-warning"></i>Recomendación
-                </div>
-                <div class="card-body">
-                    @if (!string.IsNullOrEmpty(analysis.Recommendation))
-                    {
-                        <p class="mb-0">@analysis.Recommendation</p>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0"><em>Sin recomendación disponible.</em></p>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light fw-semibold">
-                    <i class="bi bi-chat-left-text me-2 text-secondary"></i>Contenido Analizado
-                </div>
-                <div class="card-body">
-                    <pre class="bg-light rounded p-3 mb-0" style="white-space: pre-wrap; word-break: break-word; font-size: 0.9rem;">@analysis.InputContent</pre>
-                </div>
-            </div>
-        </div>
-
-        @if (!string.IsNullOrEmpty(analysis.Signals))
-        {
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-semibold">
-                        <i class="bi bi-flag me-2 text-danger"></i>Señales Detectadas
+                        </div>
                     </div>
-                    <div class="card-body">
+                </div>
+            </div>
+
+            @* ── Tipo y contenido analizado ───────────────────────────────── *@
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi @typeIcon text-primary"></i>
+                        <p class="fw-semibold mb-0">
+                            Contenido analizado
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill ms-1 small">
+                                @(Model.AnalysisType?.TypeName ?? "Texto")
+                            </span>
+                        </p>
+                    </div>
+                    <div class="bg-light rounded-3 p-3"
+                         style="font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow-y: auto;">@Model.InputContent</div>
+                </div>
+            </div>
+
+            @* ── Señales detectadas ───────────────────────────────────────── *@
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-3">
+                        <i class="bi bi-exclamation-circle me-1 text-warning"></i>
+                        Señales detectadas
+                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill ms-1">
+                            @signals.Count
+                        </span>
+                    </p>
+                    @if (signals.Any())
+                    {
                         <ul class="list-group list-group-flush">
-                            @foreach (var signal in analysis.Signals.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                            @foreach (var signal in signals)
                             {
-                                <li class="list-group-item d-flex align-items-center gap-2">
-                                    <i class="bi bi-dot text-danger fs-4"></i>
-                                    @signal.Trim()
+                                <li class="list-group-item px-0 border-0 py-1 small">
+                                    <i class="bi bi-dot text-warning fs-5 me-1"></i> @signal
                                 </li>
                             }
                         </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-check-circle text-success me-1"></i>
+                            No se detectaron señales de alerta.
+                        </p>
+                    }
+                </div>
+            </div>
+
+            @* ── Recomendación ────────────────────────────────────────────── *@
+            @if (!string.IsNullOrEmpty(Model.Recommendation))
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-3"
+                     style="border-left: 4px solid var(--bs-@(verdictClass)) !important;">
+                    <div class="card-body p-4">
+                        <p class="fw-semibold mb-1">
+                            <i class="bi bi-lightbulb me-1 text-@verdictClass"></i> Recomendación
+                        </p>
+                        <p class="mb-0 small">@Model.Recommendation</p>
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        @* ── Panel lateral ────────────────────────────────────────────────── *@
+        <div class="col-lg-4">
+
+            @* Score de riesgo *@
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-3">
+                        <i class="bi bi-speedometer2 me-1"></i> Nivel de riesgo
+                    </p>
+                    <div class="text-center mb-2">
+                        <span class="display-4 fw-bold text-@riskBarColor">@Model.RiskScore</span>
+                        <span class="text-muted fs-5"> / 100</span>
+                    </div>
+                    <div class="progress rounded-pill" style="height: 14px;">
+                        <div class="progress-bar bg-@riskBarColor"
+                             role="progressbar"
+                             style="width: @Model.RiskScore%"
+                             aria-valuenow="@Model.RiskScore"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span class="text-muted small">Seguro</span>
+                        <span class="text-muted small">Riesgo alto</span>
                     </div>
                 </div>
             </div>
-        }
 
+            @* Metadata *@
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Información
+                    </p>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">ID</span>
+                            <span class="fw-semibold">#@Model.AnalysisId</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Tipo</span>
+                            <span class="fw-semibold">@(Model.AnalysisType?.TypeName ?? "Texto")</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Fecha</span>
+                            <span class="fw-semibold">@Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Hora</span>
+                            <span class="fw-semibold">@Model.CreatedAt.ToString("HH:mm") UTC</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            @* Acciones *@
+            <div class="card border-0 shadow-sm rounded-4 card-acciones no-print">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-3">
+                        <i class="bi bi-lightning me-1"></i> Acciones
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button onclick="imprimirReporte()"
+                                class="btn btn-primary btn-sm rounded-3">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> Descargar PDF
+                        </button>
+                        <a asp-controller="@(Model.AnalysisType?.TypeName == "URL" ? "Url" : Model.AnalysisType?.TypeName == "Imagen" ? "Image" : "Text")"
+                           asp-action="Index"
+                           class="btn btn-outline-secondary btn-sm rounded-3">
+                            <i class="bi bi-plus-circle me-1"></i> Nuevo análisis
+                        </a>
+                        <form asp-action="Delete"
+                              asp-controller="History"
+                              asp-route-id="@Model.AnalysisId"
+                              method="post"
+                              onsubmit="return confirm('¿Eliminar este análisis? Esta acción no se puede deshacer.')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-outline-danger btn-sm rounded-3 w-100">
+                                <i class="bi bi-trash me-1"></i> Eliminar análisis
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
-
-    <div class="mt-4">
-        <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Volver al Historial
-        </a>
-    </div>
-
 </div>
+
+@* ── Pie de página solo para impresión ───────────────────────────────────── *@
+<div class="print-footer border-top pt-3 mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <p class="small text-muted mb-0">SafeNet © 2026 — Dannae Estefany Miranda Tapia</p>
+        <p class="small text-muted mb-0">https://safenet-y09d.onrender.com</p>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function imprimirReporte() {
+        // Titulo del documento PDF
+        const tituloOriginal = document.title;
+        document.title = 'SafeNet_Analisis_@Model.AnalysisId _@Model.CreatedAt.ToString("yyyyMMdd")';
+
+        window.print();
+
+        // Restaurar titulo original tras imprimir
+        setTimeout(() => { document.title = tituloOriginal; }, 1000);
+    }
+</script>
+}

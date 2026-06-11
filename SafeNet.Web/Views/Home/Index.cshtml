@@ -1,8 +1,110 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+@* SafeNet.Web/Views/Home/Index.cshtml *@
+@* REEMPLAZAR el archivo existente *@
+@model SafeNet.Web.Models.ViewModels.HomeViewModel
+@{ ViewData["Title"] = "Inicio"; }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@* Hero *@
+<div class="py-5" style="background: linear-gradient(135deg, #1F4E79 0%, #2e86de 100%);">
+    <div class="container text-center text-white py-4">
+        <i class="bi bi-shield-check" style="font-size:4rem;"></i>
+        <h1 class="fw-bold mt-3 mb-2" style="font-size:2.8rem;">SafeNet</h1>
+        <p class="lead mb-4 opacity-75">
+            Detector inteligente de estafas digitales con IA
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a asp-controller="Text" asp-action="Index"
+               class="btn btn-light btn-lg rounded-3 px-4 fw-semibold">
+                <i class="bi bi-chat-text me-2"></i> Verificar texto
+            </a>
+            <a asp-controller="Url" asp-action="Index"
+               class="btn btn-outline-light btn-lg rounded-3 px-4">
+                <i class="bi bi-link-45deg me-2"></i> Verificar URL
+            </a>
+        </div>
+    </div>
+</div>
+
+@* Estadísticas globales *@
+<div class="container py-5">
+    <h2 class="fw-bold text-center mb-4">Estadísticas globales</h2>
+    <div class="row g-3 mb-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <i class="bi bi-graph-up text-primary fs-2 mb-2"></i>
+                <div class="fw-bold fs-1">@Model.TotalAnalyses</div>
+                <div class="text-muted">Análisis realizados</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <i class="bi bi-shield-x text-danger fs-2 mb-2"></i>
+                <div class="fw-bold fs-1 text-danger">@Model.TotalScams</div>
+                <div class="text-muted">Estafas detectadas</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <i class="bi bi-shield-check text-success fs-2 mb-2"></i>
+                <div class="fw-bold fs-1 text-success">@Model.TotalSafe</div>
+                <div class="text-muted">Contenidos seguros</div>
+            </div>
+        </div>
+    </div>
+
+    @* Stats del usuario si está autenticado *@
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-5"
+             style="background: linear-gradient(135deg, #e8f4fd, #d5e8f0);">
+            <h5 class="fw-semibold mb-3">
+                <i class="bi bi-person-circle me-2 text-primary"></i> Tu actividad
+            </h5>
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="fw-bold fs-3">@Model.UserAnalyses</div>
+                    <div class="text-muted small">Tus análisis</div>
+                </div>
+                <div class="col-6">
+                    <div class="fw-bold fs-3 text-danger">@Model.UserScams</div>
+                    <div class="text-muted small">Estafas que detectaste</div>
+                </div>
+            </div>
+            <a asp-controller="History" asp-action="Index"
+               class="btn btn-primary btn-sm rounded-3 mt-3">
+                <i class="bi bi-clock-history me-1"></i> Ver mi historial
+            </a>
+        </div>
+    }
+
+    @* Módulos *@
+    <h2 class="fw-bold text-center mb-4">¿Qué puedes analizar?</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <i class="bi bi-chat-text text-primary fs-2 mb-3"></i>
+                <h5 class="fw-semibold">Texto</h5>
+                <p class="text-muted small">Mensajes, correos, conversaciones de WhatsApp.</p>
+                <a asp-controller="Text" asp-action="Index"
+                   class="btn btn-outline-primary btn-sm rounded-3 mt-auto">Analizar texto</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <i class="bi bi-link-45deg text-primary fs-2 mb-3"></i>
+                <h5 class="fw-semibold">URL</h5>
+                <p class="text-muted small">Verifica si un enlace es seguro antes de abrirlo.</p>
+                <a asp-controller="Url" asp-action="Index"
+                   class="btn btn-outline-primary btn-sm rounded-3 mt-auto">Verificar URL</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <i class="bi bi-file-image text-primary fs-2 mb-3"></i>
+                <h5 class="fw-semibold">Imagen</h5>
+                <p class="text-muted small">Sube capturas de pantalla y SafeNet extrae y analiza el texto.</p>
+                <a asp-controller="Image" asp-action="Index"
+                   class="btn btn-outline-primary btn-sm rounded-3 mt-auto">Analizar imagen</a>
+            </div>
+        </div>
+    </div>
 </div>
