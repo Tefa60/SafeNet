@@ -8,17 +8,17 @@ namespace SafeNet.Core.Services
 {
     public class UrlCheckerResult
     {
-        public string Verdict       { get; set; } = "SEGURA";
-        public int    RiskScore     { get; set; } = 0;
+        public string Verdict { get; set; } = "SEGURA";
+        public int RiskScore { get; set; } = 0;
         public List<string> Signals { get; set; } = new();
         public string Recommendation { get; set; } = string.Empty;
-        public bool   BlacklistHit  { get; set; } = false;
+        public bool BlacklistHit { get; set; } = false;
     }
 
     public class UrlCheckerService
     {
-        private readonly ClaudeApiService  _claude;
-        private readonly IAnalysisService  _analysis;
+        private readonly ClaudeApiService _claude;
+        private readonly IAnalysisService _analysis;
 
         private static readonly HashSet<string> Blacklist = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -34,7 +34,7 @@ namespace SafeNet.Core.Services
 
         public UrlCheckerService(ClaudeApiService claude, IAnalysisService analysis)
         {
-            _claude   = claude;
+            _claude = claude;
             _analysis = analysis;
         }
 
@@ -47,8 +47,8 @@ namespace SafeNet.Core.Services
                 (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
                  !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
             {
-                result.Verdict    = "INVÁLIDA";
-                result.RiskScore  = 0;
+                result.Verdict = "INVÁLIDA";
+                result.RiskScore = 0;
                 result.Recommendation = "La URL ingresada no tiene un formato válido. Debe comenzar con http:// o https://";
                 await GuardarAsync(url, userId, result);
                 return result;
@@ -58,7 +58,7 @@ namespace SafeNet.Core.Services
             try { uri = new Uri(url); }
             catch
             {
-                result.Verdict   = "INVÁLIDA";
+                result.Verdict = "INVÁLIDA";
                 result.RiskScore = 0;
                 result.Recommendation = "No se pudo parsear la URL.";
                 await GuardarAsync(url, userId, result);
@@ -70,10 +70,10 @@ namespace SafeNet.Core.Services
             // ── 2. Lista negra ─────────────────────────────────────────────
             if (Blacklist.Contains(domain))
             {
-                result.Verdict        = "ESTAFA";
-                result.RiskScore      = 95;
-                result.BlacklistHit   = true;
-                result.Signals        = new List<string> { "Dominio en lista negra de phishing conocido" };
+                result.Verdict = "ESTAFA";
+                result.RiskScore = 95;
+                result.BlacklistHit = true;
+                result.Signals = new List<string> { "Dominio en lista negra de phishing conocido" };
                 result.Recommendation = "Este dominio está registrado como sitio de phishing. No accedas bajo ninguna circunstancia.";
                 await GuardarAsync(url, userId, result);
                 return result;
@@ -81,7 +81,7 @@ namespace SafeNet.Core.Services
 
             // ── 3. Señales locales ──────────────────────────────────────────
             var signals = new List<string>();
-            int score   = 0;
+            int score = 0;
 
             // IP en lugar de dominio
             if (Regex.IsMatch(domain, @"^\d{1,3}(\.\d{1,3}){3}$"))
@@ -123,21 +123,21 @@ namespace SafeNet.Core.Services
                 }
             }
 
-            result.Signals   = signals;
+            result.Signals = signals;
             result.RiskScore = Math.Min(score, 89); // Máx 89 para no-blacklist
 
             // ── 4. Consultar Claude ─────────────────────────────────────────
             try
             {
-                string prompt   = $"Analiza esta URL en busca de señales de phishing o estafa: {url}";
+                string prompt = $"Analiza esta URL en busca de señales de phishing o estafa: {url}";
                 string response = await _claude.AnalizarMensajeAsync(prompt);
 
                 var json = JsonSerializer.Deserialize<JsonElement>(response);
                 string verdict = json.GetProperty("verdict").GetString() ?? "SEGURA";
                 int aiScore = (int)json.GetProperty("riskScore").GetDouble();
 
-                result.Verdict    = verdict;
-                result.RiskScore  = Math.Max(result.RiskScore, aiScore);
+                result.Verdict = verdict;
+                result.RiskScore = Math.Max(result.RiskScore, aiScore);
                 result.Recommendation = json.GetProperty("recommendation").GetString() ?? "";
 
                 if (json.TryGetProperty("signals", out var aiSignals))
@@ -157,13 +157,13 @@ namespace SafeNet.Core.Services
                 {
                     >= 70 => "ESTAFA",
                     >= 40 => "SOSPECHOSA",
-                    _     => "SEGURA"
+                    _ => "SEGURA"
                 };
                 result.Recommendation = result.Verdict switch
                 {
-                    "ESTAFA"     => "Esta URL tiene múltiples señales de peligro. No la visites.",
+                    "ESTAFA" => "Esta URL tiene múltiples señales de peligro. No la visites.",
                     "SOSPECHOSA" => "Procede con precaución. Verifica la autenticidad del sitio.",
-                    _            => "No se detectaron señales de alerta evidentes."
+                    _ => "No se detectaron señales de alerta evidentes."
                 };
             }
 
@@ -171,10 +171,25 @@ namespace SafeNet.Core.Services
             return result;
         }
 
+
+
         private async Task GuardarAsync(string url, string userId, UrlCheckerResult result)
         {
-            await _analysis.AnalizarTextoAsync(url, userId);
+            try
+            {
+                await _analysis.AnalizarTextoAsync(url, userId);
+            }
+            catch
+            {
+                // No crítico: si falla el guardado/análisis secundario, no debe tumbar la respuesta al usuario
+            }
         }
+
+
+
     }
+
+
+
 }
 
