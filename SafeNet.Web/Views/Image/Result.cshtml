@@ -1,0 +1,62 @@
+@model SafeNet.Web.Models.ViewModels.ImageResultViewModel
+@{
+    ViewData["Title"] = "Resultado del Análisis";
+    var badgeClass = Model.Verdict?.ToUpper() switch {
+        "PELIGROSA" => "danger",
+        "SOSPECHOSA" => "warning",
+        _ => "success"
+    };
+    var icon = Model.Verdict?.ToUpper() switch {
+        "PELIGROSA" => "bi-x-circle-fill",
+        "SOSPECHOSA" => "bi-exclamation-triangle-fill",
+        _ => "bi-check-circle-fill"
+    };
+}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm mb-4 border-@badgeClass">
+        <div class="card-header bg-@badgeClass text-white">
+          <h4 class="mb-0"><i class="bi @icon"></i> Veredicto: @Model.Verdict</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Puntuación de riesgo</label>
+            <div class="progress" style="height:22px;">
+              <div class="progress-bar bg-@badgeClass" role="progressbar"
+                   style="width:@Model.RiskScore%" aria-valuenow="@Model.RiskScore"
+                   aria-valuemin="0" aria-valuemax="100">@Model.RiskScore / 100</div>
+            </div>
+          </div>
+          <div class="alert alert-@badgeClass mb-3">
+            <strong>Recomendación:</strong> @Model.Recommendation
+          </div>
+          @if (Model.Signals != null && Model.Signals.Count > 0)
+          {
+            <div class="mb-3">
+              <h6 class="fw-semibold">Señales detectadas:</h6>
+              <ul class="list-group list-group-flush">
+                @foreach (var signal in Model.Signals)
+                {
+                  <li class="list-group-item">
+                    <i class="bi bi-exclamation-circle text-warning me-2"></i>@signal
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+          <div class="mb-3">
+            <h6 class="fw-semibold">Texto extraído de la imagen:</h6>
+            <div class="bg-light border rounded p-3" style="white-space:pre-wrap;font-size:0.9rem;">
+              @(string.IsNullOrWhiteSpace(Model.ExtractedText) ? "No se pudo extraer texto de la imagen." : Model.ExtractedText)
+            </div>
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Analizar otra imagen</a>
+          <a asp-controller="Home" asp-action="Index" class="btn btn-primary ms-2"><i class="bi bi-house"></i> Inicio</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

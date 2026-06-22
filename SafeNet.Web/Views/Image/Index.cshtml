@@ -1,0 +1,36 @@
+@model SafeNet.Web.Models.ViewModels.ImageInputViewModel
+@{
+    ViewData["Title"] = "Analizar Imagen";
+}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0"><i class="bi bi-image"></i> Analizar Imagen</h4>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">
+            Sube una captura de pantalla o imagen sospechosa y SafeNet extraerá el texto y lo analizará en busca de señales de estafa.
+          </p>
+          <form asp-action="Analyze" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+              <label asp-for="ImageFile" class="form-label fw-semibold"></label>
+              <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+              <span asp-validation-for="ImageFile" class="text-danger small"></span>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-shield-check"></i> Analizar imagen
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -22,6 +22,7 @@ builder.Services.AddHttpClient<SafeNet.Core.Services.ClaudeApiService>();
 builder.Services.AddScoped<SafeNet.Core.Services.AnalysisService>();
 builder.Services.AddScoped<SafeNet.Core.Interfaces.IAnalysisService, SafeNet.Core.Services.AnalysisService>();
 builder.Services.AddScoped<SafeNet.Core.Services.UrlCheckerService>();
+builder.Services.AddScoped<SafeNet.Core.Services.OcrService>();
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -42,3 +43,4 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 app.Run();
+
