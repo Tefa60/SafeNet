@@ -1,6 +1,6 @@
-@model SafeNet.Web.Models.ViewModels.ImageResultViewModel
+ï»¿@model SafeNet.Web.Models.ViewModels.ImageResultViewModel
 @{
-    ViewData["Title"] = "Resultado del Análisis";
+    ViewData["Title"] = "Resultado del AnÃ¡lisis";
     var badgeClass = Model.Verdict?.ToUpper() switch {
         "PELIGROSA" => "danger",
         "SOSPECHOSA" => "warning",
@@ -21,7 +21,7 @@
         </div>
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Puntuación de riesgo</label>
+            <label class="form-label fw-semibold">PuntuaciÃ³n de riesgo</label>
             <div class="progress" style="height:22px;">
               <div class="progress-bar bg-@badgeClass" role="progressbar"
                    style="width:@Model.RiskScore%" aria-valuenow="@Model.RiskScore"
@@ -29,12 +29,12 @@
             </div>
           </div>
           <div class="alert alert-@badgeClass mb-3">
-            <strong>Recomendación:</strong> @Model.Recommendation
+            <strong>RecomendaciÃ³n:</strong> @Model.Recommendation
           </div>
           @if (Model.Signals != null && Model.Signals.Count > 0)
           {
             <div class="mb-3">
-              <h6 class="fw-semibold">Señales detectadas:</h6>
+              <h6 class="fw-semibold">SeÃ±ales detectadas:</h6>
               <ul class="list-group list-group-flush">
                 @foreach (var signal in Model.Signals)
                 {
@@ -46,7 +46,7 @@
             </div>
           }
           <div class="mb-3">
-            <h6 class="fw-semibold">Texto extraído de la imagen:</h6>
+            <h6 class="fw-semibold">Texto extraÃ­do de la imagen:</h6>
             <div class="bg-light border rounded p-3" style="white-space:pre-wrap;font-size:0.9rem;">
               @(string.IsNullOrWhiteSpace(Model.ExtractedText) ? "No se pudo extraer texto de la imagen." : Model.ExtractedText)
             </div>
