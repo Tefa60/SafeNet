@@ -1,7 +1,8 @@
-// SafeNet.Web/Controllers/ImageController.cs
+﻿// SafeNet.Web/Controllers/ImageController.cs
 using Microsoft.AspNetCore.Mvc;
 using SafeNet.Core.Interfaces;
 using SafeNet.Core.Services;
+using SafeNet.Data;
 using SafeNet.Data.Entidades;
 using SafeNet.Web.Models.ViewModels;
 using System.Security.Claims;
@@ -11,15 +12,17 @@ namespace SafeNet.Web.Controllers
 {
     public class ImageController : Controller
     {
-        private readonly OcrService       _ocr;
+        private readonly OcrService _ocr;
         private readonly ClaudeApiService _claude;
         private readonly IAnalysisService _analysis;
+        private readonly AppDbContext _context;
 
-        public ImageController(OcrService ocr, ClaudeApiService claude, IAnalysisService analysis)
+        public ImageController(OcrService ocr, ClaudeApiService claude, IAnalysisService analysis, AppDbContext context)
         {
-            _ocr      = ocr;
-            _claude   = claude;
+            _ocr = ocr;
+            _claude = claude;
             _analysis = analysis;
+            _context = context;
         }
 
         public IActionResult Index() => View();
@@ -50,14 +53,14 @@ namespace SafeNet.Web.Controllers
             // Analizar con Claude
             string verdict        = "SEGURA";
             int    riskScore      = 0;
-            string recommendation = "No se detectaron señales de alerta.";
+            string recommendation = "No se detectaron senales de alerta.";
             var    signals        = new List<string>();
 
             try
             {
-                string prompt   = $"Analiza el siguiente texto extraido de una imagen en busca de señales de estafa o phishing: {extractedText}";
-                string response = await _claude.AnalizarMensajeAsync(prompt);
-                var    json     = JsonSerializer.Deserialize<JsonElement>(response);
+                string prompt    = $"Analiza el siguiente texto extraido de una imagen en busca de senales de estafa o phishing: {extractedText}";
+                string response  = await _claude.AnalizarMensajeAsync(prompt);
+                var    json       = JsonSerializer.Deserialize<JsonElement>(response);
 
                 verdict        = json.GetProperty("verdict").GetString()        ?? "SEGURA";
                 riskScore      = json.GetProperty("riskScore").GetInt32();
@@ -69,9 +72,24 @@ namespace SafeNet.Web.Controllers
             }
             catch { /* fallback: valores por defecto */ }
 
-            // Guardar en BD
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonimo";
-            await _analysis.AnalizarTextoAsync(extractedText, userId);
+
+            // --- NUEVO: persistencia del analisis en la tabla Analyses ---
+            var entity = new AnalysisEntity
+            {
+                UserId         = userId,
+                TypeId         = 3, // 3 = "Imagen" segun seed data de AnalysisTypeEntity
+                InputContent   = extractedText,
+                Verdict        = verdict,
+                RiskScore      = (byte)riskScore,
+                Signals        = string.Join(", ", signals),
+                Recommendation = recommendation,
+                ImagePath      = model.ImageFile?.FileName
+            };
+
+            _context.Analyses.Add(entity);
+            await _context.SaveChangesAsync();
+            // --- FIN NUEVO ---
 
             var vm = new ImageResultViewModel
             {
@@ -86,4 +104,3 @@ namespace SafeNet.Web.Controllers
         }
     }
 }
-

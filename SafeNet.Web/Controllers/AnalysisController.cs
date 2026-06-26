@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SafeNet.Core.Interfaces;
+using SafeNet.Data;
+using SafeNet.Data.Entidades;
 using SafeNet.Web.Models.ViewModels;
 
 namespace SafeNet.Web.Controllers
@@ -7,10 +9,12 @@ namespace SafeNet.Web.Controllers
     public class AnalysisController : Controller
     {
         private readonly IAnalysisService _analysisService;
+        private readonly AppDbContext _context;
 
-        public AnalysisController(IAnalysisService analysisService)
+        public AnalysisController(IAnalysisService analysisService, AppDbContext context)
         {
             _analysisService = analysisService;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -37,6 +41,31 @@ namespace SafeNet.Web.Controllers
                 FechaAnalisis = resultado.FechaAnalisis,
                 EsSimulacion = resultado.EsSimulacion
             };
+
+            // --- NUEVO: persistencia del analisis en la tabla Analyses ---
+            byte riskScore = resultado.NivelRiesgo?.Trim().ToUpperInvariant() switch
+            {
+                "BAJO" => 20,
+                "MEDIO" => 50,
+                "ALTO" => 80,
+                "CRITICO" or "CRÍTICO" => 95,
+                _ => 50 // valor por defecto si viene un texto inesperado
+            };
+
+            var entity = new AnalysisEntity
+            {
+                UserId         = usuarioId,
+                TypeId         = 1, // 1 = "Texto" segun seed data de AnalysisTypeEntity
+                InputContent   = resultado.TextoAnalizado,
+                Verdict        = resultado.Veredicto,
+                RiskScore      = riskScore,
+                Signals        = resultado.NivelRiesgo, // se guarda el nivel original como texto
+                Recommendation = resultado.Explicacion
+            };
+
+            _context.Analyses.Add(entity);
+            await _context.SaveChangesAsync();
+            // --- FIN NUEVO ---
 
             return View("Result", resultVM);
         }
