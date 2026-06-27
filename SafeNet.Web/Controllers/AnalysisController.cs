@@ -3,6 +3,7 @@ using SafeNet.Core.Interfaces;
 using SafeNet.Data;
 using SafeNet.Data.Entidades;
 using SafeNet.Web.Models.ViewModels;
+using System.Security.Claims;
 
 namespace SafeNet.Web.Controllers
 {
@@ -29,7 +30,10 @@ namespace SafeNet.Web.Controllers
             if (!ModelState.IsValid)
                 return View("Index", model);
 
-            var usuarioId = User.Identity?.Name ?? "anonimo";
+            // Corregido: antes usaba User.Identity?.Name (email), ahora usa el
+            // mismo identificador (GUID) que UrlController e ImageController,
+            // para que HistoryController pueda encontrar estos analisis.
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonimo";
             var resultado = await _analysisService.AnalizarTextoAsync(model.Texto, usuarioId);
 
             var resultVM = new AnalysisResultVM
@@ -42,7 +46,7 @@ namespace SafeNet.Web.Controllers
                 EsSimulacion = resultado.EsSimulacion
             };
 
-            // --- NUEVO: persistencia del analisis en la tabla Analyses ---
+            // --- Persistencia del analisis en la tabla Analyses ---
             byte riskScore = resultado.NivelRiesgo?.Trim().ToUpperInvariant() switch
             {
                 "BAJO" => 20,
@@ -65,7 +69,7 @@ namespace SafeNet.Web.Controllers
 
             _context.Analyses.Add(entity);
             await _context.SaveChangesAsync();
-            // --- FIN NUEVO ---
+            // --- FIN ---
 
             return View("Result", resultVM);
         }
