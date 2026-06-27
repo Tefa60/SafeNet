@@ -1,19 +1,16 @@
 ﻿@removeTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.OptionTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
-@* SafeNet.Web/Views/History/Index.cshtml *@
-@* REEMPLAZAR el archivo existente con este contenido completo *@
 @model SafeNet.Web.Models.ViewModels.HistoryViewModel
 @{
     ViewData["Title"] = "Mi Historial";
 }
 
 <div class="container py-5">
-
-    @* â”€â”€ Encabezado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ *@
+    @* Encabezado *@
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
             <h1 class="fw-bold mb-0">Mi Historial</h1>
             <p class="text-muted small mb-0">
-                @Model.TotalAnalyses anÃ¡lisis realizados
+                @Model.TotalAnalyses análisis realizados
                 @if (Model.HasActiveFilters)
                 {
                     <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill ms-1">
@@ -32,7 +29,7 @@
         </a>
     </div>
 
-    @* â”€â”€ Tarjetas de estadÃ­sticas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ *@
+    @* Tarjetas de estadísticas *@
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm rounded-4 text-center p-3">
@@ -60,12 +57,12 @@
         </div>
     </div>
 
-    @* â”€â”€ Buscador + Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ *@
+    @* Buscador + Filtros *@
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <form method="get" asp-action="Index" asp-controller="History">
 
-                @* Barra de bÃºsqueda *@
+                @* Barra de búsqueda *@
                 <div class="input-group mb-3">
                     <span class="input-group-text bg-light border-end-0">
                         <i class="bi bi-search text-muted"></i>
@@ -74,7 +71,7 @@
                            name="search"
                            value="@Model.Search"
                            class="form-control border-start-0 border-end-0"
-                           placeholder="Buscar en contenido, seÃ±ales o recomendaciÃ³n..."
+                           placeholder="Buscar en contenido, señales o recomendación..."
                            autocomplete="off" />
                     @if (!string.IsNullOrEmpty(Model.Search))
                     {
@@ -136,7 +133,7 @@
         </div>
     </div>
 
-    @* â”€â”€ Tabla de resultados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ *@
+    @* Tabla de resultados *@
     @if (!Model.Analyses.Any())
     {
         <div class="card border-0 shadow-sm rounded-4">
@@ -145,17 +142,17 @@
                 <h5 class="fw-semibold mt-3 mb-1">
                     @if (Model.HasActiveFilters)
                     {
-                        <span>Sin resultados para tu bÃºsqueda</span>
+                        <span>Sin resultados para tu búsqueda</span>
                     }
                     else
                     {
-                        <span>AÃºn no tienes anÃ¡lisis</span>
+                        <span>Aún no tienes análisis</span>
                     }
                 </h5>
                 <p class="text-muted small mb-3">
                     @if (Model.HasActiveFilters)
                     {
-                        <span>Intenta con otros tÃ©rminos o limpia los filtros.</span>
+                        <span>Intenta con otros términos o limpia los filtros.</span>
                     }
                     else
                     {
@@ -172,7 +169,7 @@
                 {
                     <a asp-controller="Home" asp-action="Index"
                        class="btn btn-primary btn-sm rounded-3">
-                        <i class="bi bi-plus-circle me-1"></i> Nuevo anÃ¡lisis
+                        <i class="bi bi-plus-circle me-1"></i> Nuevo análisis
                     </a>
                 }
             </div>
@@ -199,18 +196,17 @@
                         {
                             string badgeClass = item.Verdict switch
                             {
-                                "ESTAFA"     => "danger",
+                                "ESTAFA" => "danger",
                                 "SOSPECHOSA" => "warning",
-                                "SEGURA"     => "success",
-                                _            => "secondary"
+                                "SEGURA" => "success",
+                                _ => "secondary"
                             };
                             string typeIcon = item.AnalysisType?.TypeName switch
                             {
-                                "URL"    => "bi-link-45deg",
+                                "URL" => "bi-link-45deg",
                                 "Imagen" => "bi-file-image",
-                                _        => "bi-chat-text"
+                                _ => "bi-chat-text"
                             };
-
                             <tr>
                                 <td class="ps-4 text-muted small">#@item.AnalysisId</td>
                                 <td>
@@ -222,7 +218,7 @@
                                           style="max-width: 280px;"
                                           title="@item.InputContent">
                                         @(item.InputContent?.Length > 80
-                                            ? item.InputContent[..80] + "â€¦"
+                                            ? item.InputContent[..80] + "…"
                                             : item.InputContent)
                                     </span>
                                 </td>
@@ -257,7 +253,7 @@
             </div>
         </div>
 
-        @* â”€â”€ PaginaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ *@
+        @* Paginación *@
         @if (Model.TotalPages > 1)
         {
             <nav class="mt-4 d-flex justify-content-center">
@@ -300,9 +296,4 @@
             </nav>
         }
     }
-
 </div>
-
-
-
-
