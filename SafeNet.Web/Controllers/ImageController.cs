@@ -7,7 +7,6 @@ using SafeNet.Data.Entidades;
 using SafeNet.Web.Models.ViewModels;
 using System.Security.Claims;
 using System.Text.Json;
-
 namespace SafeNet.Web.Controllers
 {
     public class ImageController : Controller
@@ -16,7 +15,6 @@ namespace SafeNet.Web.Controllers
         private readonly ClaudeApiService _claude;
         private readonly IAnalysisService _analysis;
         private readonly AppDbContext _context;
-
         public ImageController(OcrService ocr, ClaudeApiService claude, IAnalysisService analysis, AppDbContext context)
         {
             _ocr = ocr;
@@ -24,16 +22,13 @@ namespace SafeNet.Web.Controllers
             _analysis = analysis;
             _context = context;
         }
-
         public IActionResult Index() => View();
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Analyze(ImageInputViewModel model)
         {
             if (!ModelState.IsValid || model.ImageFile == null)
                 return View("Index", model);
-
             // Leer bytes de la imagen
             byte[] imageBytes;
             using (var ms = new MemoryStream())
@@ -41,39 +36,31 @@ namespace SafeNet.Web.Controllers
                 await model.ImageFile.CopyToAsync(ms);
                 imageBytes = ms.ToArray();
             }
-
             // Extraer texto con OCR
             string extractedText = _ocr.ExtractText(imageBytes);
-
-            if (string.IsNullOrWhiteSpace(extractedText) || extractedText.StartsWith("[OCR"))
+            if (string.IsNullOrWhiteSpace(extractedText))
             {
                 extractedText = "[No se pudo extraer texto de la imagen]";
             }
-
             // Analizar con Claude
             string verdict        = "SEGURA";
             int    riskScore      = 0;
             string recommendation = "No se detectaron senales de alerta.";
             var    signals        = new List<string>();
-
             try
             {
                 string prompt    = $"Analiza el siguiente texto extraido de una imagen en busca de senales de estafa o phishing: {extractedText}";
                 string response  = await _claude.AnalizarMensajeAsync(prompt);
                 var    json       = JsonSerializer.Deserialize<JsonElement>(response);
-
                 verdict        = json.GetProperty("verdict").GetString()        ?? "SEGURA";
                 riskScore      = json.GetProperty("riskScore").GetInt32();
                 recommendation = json.GetProperty("recommendation").GetString() ?? "";
-
                 if (json.TryGetProperty("signals", out var sigs))
                     foreach (var s in sigs.EnumerateArray())
                         signals.Add(s.GetString() ?? "");
             }
             catch { /* fallback: valores por defecto */ }
-
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonimo";
-
             // --- NUEVO: persistencia del analisis en la tabla Analyses ---
             var entity = new AnalysisEntity
             {
@@ -86,11 +73,9 @@ namespace SafeNet.Web.Controllers
                 Recommendation = recommendation,
                 ImagePath      = model.ImageFile?.FileName
             };
-
             _context.Analyses.Add(entity);
             await _context.SaveChangesAsync();
             // --- FIN NUEVO ---
-
             var vm = new ImageResultViewModel
             {
                 ExtractedText  = extractedText,
@@ -99,7 +84,6 @@ namespace SafeNet.Web.Controllers
                 Signals        = signals,
                 Recommendation = recommendation
             };
-
             return View("Result", vm);
         }
     }
