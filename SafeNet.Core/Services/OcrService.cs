@@ -1,4 +1,4 @@
-// SafeNet.Core/Services/OcrService.cs
+﻿using System.Linq;
 using Tesseract;
 
 namespace SafeNet.Core.Services
@@ -7,13 +7,31 @@ namespace SafeNet.Core.Services
     {
         private readonly string _tessDataPath;
 
+        // Rutas conocidas donde Debian/Ubuntu suele instalar tessdata via apt-get,
+        // segun la version de Tesseract que traiga el repositorio de paquetes.
+        // Se usa la primera que exista en el sistema.
+        private static readonly string[] RutasLinuxPosibles = new[]
+        {
+            "/usr/share/tesseract-ocr/5/tessdata",
+            "/usr/share/tesseract-ocr/4.00/tessdata",
+            "/usr/share/tesseract-ocr/tessdata",
+            "/usr/share/tessdata"
+        };
+
         public OcrService()
         {
-            // En produccion (Docker/Render) Tesseract queda en /usr/share/tesseract-ocr/5/tessdata
-            // En local (Windows) ajusta a tu ruta de instalacion
-            _tessDataPath = Environment.OSVersion.Platform == PlatformID.Unix
-                ? "/usr/share/tesseract-ocr/5/tessdata"
-                : @"C:\Program Files\Tesseract-OCR\tessdata";
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                // En produccion (Docker/Render): probar cada ruta conocida y usar la primera que exista
+                _tessDataPath = RutasLinuxPosibles.FirstOrDefault(Directory.Exists)
+                    ?? RutasLinuxPosibles[0]; // si ninguna existe, se deja la primera como valor por defecto
+                                              // (el error real se vera reflejado en el catch de ExtractText)
+            }
+            else
+            {
+                // En local (Windows)
+                _tessDataPath = @"C:\Program Files\Tesseract-OCR\tessdata";
+            }
         }
 
         public string ExtractText(byte[] imageBytes)
@@ -27,7 +45,7 @@ namespace SafeNet.Core.Services
             }
             catch (Exception ex)
             {
-                return $"[OCR no disponible: {ex.Message}]";
+                return $"[OCR no disponible: {ex.Message} (ruta usada: {_tessDataPath})]";
             }
         }
     }
