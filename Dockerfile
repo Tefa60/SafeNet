@@ -2,14 +2,16 @@
 WORKDIR /app
 EXPOSE 80
 
-# Instalar Tesseract OCR + paquetes de idioma (ingles y español)
+# Instalar Tesseract OCR + paquetes de idioma (ingles y espanol)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         tesseract-ocr \
         tesseract-ocr-eng \
         tesseract-ocr-spa \
         libleptonica-dev && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    LEPT_LIB=$(find / -name "liblept.so.*" 2>/dev/null | head -n1) && \
+    ln -sf "$LEPT_LIB" /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
