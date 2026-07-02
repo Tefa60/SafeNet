@@ -9,14 +9,10 @@ RUN apt-get update && \
         tesseract-ocr-eng \
         tesseract-ocr-spa \
         libleptonica-dev && \
-    echo "=== DIAGNOSTICO: archivos lept encontrados ===" && \
-    find / -iname "*lept*" 2>/dev/null && \
-    echo "=== FIN DIAGNOSTICO ===" && \
     LEPT_LIB=$(find / -name "liblept.so.*" 2>/dev/null | head -n1) && \
-    echo "=== LEPT_LIB detectado: $LEPT_LIB ===" && \
-    ln -sf "$LEPT_LIB" /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so && \
-    echo "=== Verificacion del symlink ===" && \
-    ls -la /usr/lib/x86_64-linux-gnu/ | grep -i lept && \
+    if [ -n "$LEPT_LIB" ]; then \
+        ln -sf "$LEPT_LIB" /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so; \
+    fi && \
     rm -rf /var/lib/apt/lists/*
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
