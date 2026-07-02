@@ -7,8 +7,8 @@ namespace SafeNet.Core.Services
     {
         private readonly string _tessDataPath;
 
-        // Rutas conocidas donde Debian/Ubuntu suele instalar tessdata via apt-get,
-        // segun la version de Tesseract que traiga el repositorio de paquetes.
+        // Rutas conocidas donde Debian/Ubuntu suele instalar tessdata,
+        // segun la version de Tesseract que trae el repositorio de paquetes.
         // Se usa la primera que exista en el sistema.
         private static readonly string[] RutasLinuxPosibles = new[]
         {
@@ -22,14 +22,11 @@ namespace SafeNet.Core.Services
         {
             if (Environment.OSVersion.Platform == PlatformID.Unix)
             {
-                // En produccion (Docker/Render): probar cada ruta conocida y usar la primera que exista
                 _tessDataPath = RutasLinuxPosibles.FirstOrDefault(Directory.Exists)
-                    ?? RutasLinuxPosibles[0]; // si ninguna existe, se deja la primera como valor por defecto
-                                              // (el error real se vera reflejado en el catch de ExtractText)
+                    ?? RutasLinuxPosibles[0];
             }
             else
             {
-                // En local (Windows)
                 _tessDataPath = @"C:\Program Files\Tesseract-OCR\tessdata";
             }
         }
@@ -39,13 +36,32 @@ namespace SafeNet.Core.Services
             try
             {
                 using var engine = new TesseractEngine(_tessDataPath, "spa+eng", EngineMode.Default);
-                using var img    = Pix.LoadFromMemory(imageBytes);
-                using var page   = engine.Process(img);
+                using var img = Pix.LoadFromMemory(imageBytes);
+                using var page = engine.Process(img);
                 return page.GetText().Trim();
             }
             catch (Exception ex)
             {
-                return $"[OCR no disponible: {ex.Message} (ruta usada: {_tessDataPath})]";
+                string innerMsg = ex.InnerException != null ? ex.InnerException.Message : "(sin inner exception)";
+                bool existe = Directory.Exists(_tessDataPath);
+                string archivos = "(no se pudo listar)";
+                try
+                {
+                    if (existe)
+                    {
+                        archivos = string.Join(", ", Directory.GetFiles(_tessDataPath).Select(Path.GetFileName));
+                        if (string.IsNullOrEmpty(archivos)) archivos = "(directorio vacio)";
+                    }
+                    else
+                    {
+                        archivos = "(directorio no existe)";
+                    }
+                }
+                catch (Exception exList)
+                {
+                    archivos = "(error al listar: " + exList.Message + ")";
+                }
+                return $"[OCR no disponible: {ex.Message} | Inner: {innerMsg}] (ruta: {_tessDataPath}, existe: {existe}, archivos: {archivos})";
             }
         }
     }
