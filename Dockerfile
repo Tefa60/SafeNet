@@ -18,6 +18,11 @@ RUN apt-get update && \
     if [ -n "$TESS_LIB" ]; then \
         ln -sf "$TESS_LIB" /app/x64/libtesseract50.so; \
     fi && \
+    DL_LIB=$(find / -name "libdl.so.2" 2>/dev/null | head -n1) && \
+    if [ -n "$DL_LIB" ]; then \
+        ln -sf "$DL_LIB" /app/libdl.so && \
+        ln -sf "$DL_LIB" /app/x64/libdl.so; \
+    fi && \
     rm -rf /var/lib/apt/lists/*
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
