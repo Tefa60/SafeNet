@@ -9,9 +9,14 @@ RUN apt-get update && \
         tesseract-ocr-eng \
         tesseract-ocr-spa \
         libleptonica-dev && \
+    mkdir -p /app/x64 && \
     LEPT_LIB=$(find / -name "liblept.so.*" 2>/dev/null | head -n1) && \
     if [ -n "$LEPT_LIB" ]; then \
-        ln -sf "$LEPT_LIB" /usr/lib/x86_64-linux-gnu/libleptonica-1.82.0.so; \
+        ln -sf "$LEPT_LIB" /app/x64/libleptonica-1.82.0.so; \
+    fi && \
+    TESS_LIB=$(find / -name "libtesseract.so.*" 2>/dev/null | head -n1) && \
+    if [ -n "$TESS_LIB" ]; then \
+        ln -sf "$TESS_LIB" /app/x64/libtesseract50.so; \
     fi && \
     rm -rf /var/lib/apt/lists/*
 
